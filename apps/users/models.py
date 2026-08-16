@@ -6,10 +6,11 @@ from django.db import models
 class User(AbstractUser):
     
     balance = models.DecimalField(verbose_name='Баланс', 
-                                  max_digits=15, 
-                                  decimal_places=2, 
-                                  default=0.00, 
-                                  validators=[MinValueValidator(0)])
+        max_digits=15, 
+        decimal_places=2, 
+        default=0.00, 
+        validators=[MinValueValidator(0)]
+    )
     
     class Meta:
         verbose_name = 'Пользователь'

@@ -1,19 +1,20 @@
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
-from rest_framework.response import Response
-from rest_framework.generics import CreateAPIView
-from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework import status
 from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.cart.models import Cart
 from .serializers import UserRegistrationSerializer, UserSerializer
-
+from decimal import InvalidOperation, Decimal
 
 User = get_user_model()
 
 class RegisterView(CreateAPIView):
+    
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
@@ -29,21 +30,24 @@ class LoginView(TokenObtainPairView):
 
 
 class LogoutView(APIView):
+    
     permission_classes = [IsAuthenticated]
     
     def post(self, request):
-        try:
-            refresh_token = request.data.get('refresh_token')
-            if not refresh_token:
-                return Response(
-                    {"error": "Поле 'refresh_token' обязательно."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        refresh_token = request.data.get('refresh_token')
+        
+        if not refresh_token:
+            return Response(
+                {"error": "Поле 'refresh_token' обязательно."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
             
+        try:
+           
             token = RefreshToken(refresh_token)
             token.blacklist()
             
-            return Response(  
+            return Response(
                 {"message": "Вы успешно вышли из системы."},
                 status=status.HTTP_205_RESET_CONTENT
             )
@@ -56,6 +60,7 @@ class LogoutView(APIView):
 
 
 class ProfileView(APIView):
+    
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -74,7 +79,7 @@ class ProfileView(APIView):
 
 
 class BalanceView(APIView):
-    """Пополнение баланса"""
+
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -85,17 +90,17 @@ class BalanceView(APIView):
     def post(self, request):
         amount = request.data.get('amount')
         
-        if not amount:
+        if amount is None:
             return Response(
                 {"error": "Необходимо указать сумму пополнения"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         try:
-            amount = float(amount)
+            amount = Decimal(str(amount))
             if amount <= 0:
                 raise ValueError
-        except ValueError:
+        except (ValueError, TypeError, InvalidOperation):
             return Response(
                 {"error": "Сумма должна быть положительным числом"},
                 status=status.HTTP_400_BAD_REQUEST

@@ -31,7 +31,7 @@ class Cart(models.Model):
     
     def get_total_price(self):
         """Общая стоимость всех товаров в корзине"""
-        return sum(item.get_total_price() for item in self.items.all())
+        return sum(item.get_total_price() for item in self.cart_items.all())
 
 
 class CartItem(models.Model):
